@@ -4,13 +4,11 @@
   if (yearSpan) {
     yearSpan.textContent = new Date().getFullYear();
   }
-})();
-
 // Elements
-const feedBtn = document.getElementById('feedBtn');
-const dashboardBtn = document.getElementById('dashboardBtn');
-const summaryBtn = document.getElementById('summaryBtn');
-const viewContainer = document.getElementById('view-container');
+const feedBtn = document.getElementById('nav-feed');
+const dashboardBtn = document.getElementById('nav-dashboard');
+const summaryBtn = document.getElementById('nav-summary');
+const viewContainer = document.getElementById('main-content');
 
 // Set active navigation state
 function setActive(button) {
