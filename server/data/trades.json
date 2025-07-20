@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "symbol": "SPY",
+    "strategy": "CSP",
+    "strike_info": "420P",
+    "entry": 1.2,
+    "stop": 0.5,
+    "target": 2.0,
+    "expiry": "2025-07-26",
+    "confidence_level": 5,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 2,
+    "symbol": "TSLA",
+    "strategy": "Put Credit Spread",
+    "strike_info": "600/580",
+    "entry": 2.5,
+    "stop": 1.0,
+    "target": 4.0,
+    "expiry": "2025-07-26",
+    "confidence_level": 4,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 3,
+    "symbol": "AAPL",
+    "strategy": "Iron Condor",
+    "strike_info": "180/185/195/200",
+    "entry": 1.8,
+    "stop": 0.8,
+    "target": 3.0,
+    "expiry": "2025-07-26",
+    "confidence_level": 3,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 4,
+    "symbol": "AMZN",
+    "strategy": "Call Debit Spread",
+    "strike_info": "120/125",
+    "entry": 1.5,
+    "stop": 0.7,
+    "target": 2.5,
+    "expiry": "2025-07-26",
+    "confidence_level": 4,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 5,
+    "symbol": "MSFT",
+    "strategy": "Put Credit Spread",
+    "strike_info": "330/320",
+    "entry": 2.0,
+    "stop": 0.9,
+    "target": 3.5,
+    "expiry": "2025-07-26",
+    "confidence_level": 4,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 6,
+    "symbol": "GOOGL",
+    "strategy": "CSP",
+    "strike_info": "120P",
+    "entry": 1.1,
+    "stop": 0.5,
+    "target": 2.1,
+    "expiry": "2025-07-26",
+    "confidence_level": 3,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 7,
+    "symbol": "NVDA",
+    "strategy": "Put Debit Spread",
+    "strike_info": "450/440",
+    "entry": 2.3,
+    "stop": 1.0,
+    "target": 4.0,
+    "expiry": "2025-07-26",
+    "confidence_level": 5,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 8,
+    "symbol": "META",
+    "strategy": "Call Credit Spread",
+    "strike_info": "300/310",
+    "entry": 1.7,
+    "stop": 0.7,
+    "target": 3.0,
+    "expiry": "2025-07-26",
+    "confidence_level": 4,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 9,
+    "symbol": "NFLX",
+    "strategy": "Iron Condor",
+    "strike_info": "480/490/520/530",
+    "entry": 2.1,
+    "stop": 1.0,
+    "target": 3.8,
+    "expiry": "2025-07-26",
+    "confidence_level": 3,
+    "date": "2025-07-20"
+  },
+  {
+    "id": 10,
+    "symbol": "AMD",
+    "strategy": "Call Debit Spread",
+    "strike_info": "110/115",
+    "entry": 1.4,
+    "stop": 0.6,
+    "target": 2.5,
+    "expiry": "2025-07-26",
+    "confidence_level": 4,
+    "date": "2025-07-20"
+  }
+]
