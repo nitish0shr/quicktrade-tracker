@@ -1,4 +1,5 @@
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
@@ -27,6 +28,78 @@ function loadUserTrades() {
     console.error('Error reading user trades:', err);
     return [];
   }
+}
+
+// Fetch real-time prices for a list of symbols from Yahoo Finance
+// Returns a promise that resolves to an object mapping each symbol to its current price.
+function fetchLivePrices(symbols) {
+  return new Promise((resolve, reject) => {
+    if (!symbols || symbols.length === 0) {
+      return resolve({});
+    }
+    const apiUrl =
+      'https://query1.finance.yahoo.com/v7/finance/quote?symbols=' +
+      symbols.join(',');
+    https
+      .get(apiUrl, resp => {
+        let data = '';
+        resp.on('data', chunk => (data += chunk.toString()));
+        resp.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            const result = {};
+            if (json.quoteResponse && json.quoteResponse.result) {
+              json.quoteResponse.result.forEach(item => {
+                if (
+                  item.symbol &&
+                  typeof item.regularMarketPrice === 'number'
+                ) {
+                  result[item.symbol] = item.regularMarketPrice;
+                }
+              });
+            }
+            resolve(result);
+          } catch (err) {
+            // On parse error, resolve with empty map
+            resolve({});
+          }
+        });
+      })
+      .on('error', err => {
+        // On network error, resolve with empty map
+        resolve({});
+      });
+  });
+}
+
+// Combine daily trade recommendations with live prices. For each trade, the current
+// market price replaces the entry price and adjusts stop/target based on the
+// difference defined in the static data. If no live price is available, the
+// original entry/stop/target values are returned.
+async function getLiveTrades() {
+  const trades = loadTrades();
+  const symbols = trades.map(t => t.symbol);
+  const priceMap = await fetchLivePrices(symbols);
+  return trades.map(trade => {
+    const live = priceMap[trade.symbol];
+    if (live && !isNaN(live)) {
+      const entry = Number(trade.entry);
+      const stop = Number(trade.stop);
+      const target = Number(trade.target);
+      const stopDiff = entry - stop;
+      const targetDiff = target - entry;
+      const liveEntry = live;
+      const liveStop = live - stopDiff;
+      const liveTarget = live + targetDiff;
+      return Object.assign({}, trade, {
+        currentPrice: live.toFixed(2),
+        entry: liveEntry.toFixed(2),
+        stop: liveStop.toFixed(2),
+        target: liveTarget.toFixed(2)
+      });
+    }
+    return trade;
+  });
 }
 
 // Persist confirmed trades to disk
@@ -132,11 +205,22 @@ const server = http.createServer((req, res) => {
   }
 
   // API endpoints
+  // Return daily trade recommendations with live pricing
   if (parsed.pathname === '/api/trades' && method === 'GET') {
     setCorsHeaders();
-    const trades = loadTrades();
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    return res.end(JSON.stringify(trades));
+    // Fetch live trades asynchronously; respond once resolved
+    getLiveTrades()
+      .then(trades => {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(trades));
+      })
+      .catch(() => {
+        // On error, fall back to static trades
+        const trades = loadTrades();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(trades));
+      });
+    return;
   }
 
   // Confirm a trade by ID: POST /api/trades/:id/confirm
