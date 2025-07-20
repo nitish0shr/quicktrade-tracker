@@ -1,190 +1,192 @@
-(function() {
-  const main = document.getElementById('main-content');
-  const navFeed = document.getElementById('nav-feed');
-  const navDash = document.getElementById('nav-dashboard');
-  const navSummary = document.getElementById('nav-summary');
-
-  function setActive(activeLink) {
-    [navFeed, navDash, navSummary].forEach(link => {
-      if (link) {
-        link.classList.toggle('active', link === activeLink);
-      }
-    });
+// Utility to set the year in the footer
+(function updateYear() {
+  const yearSpan = document.getElementById('year');
+  if (yearSpan) {
+    yearSpan.textContent = new Date().getFullYear();
   }
-
-  if (navFeed) {
-    navFeed.addEventListener('click', (e) => {
-      e.preventDefault();
-      setActive(navFeed);
-      loadFeed();
-    });
-  }
-  if (navDash) {
-    navDash.addEventListener('click', (e) => {
-      e.preventDefault();
-      setActive(navDash);
-      loadDashboard();
-    });
-  }
-  if (navSummary) {
-    navSummary.addEventListener('click', (e) => {
-      e.preventDefault();
-      setActive(navSummary);
-      loadSummary();
-    });
-  }
-
-  function loadFeed() {
-    if (!main) return;
-    main.innerHTML = '<p>Loading trades...</p>';
-    fetch('/api/trades')
-      .then(res => res.json())
-      .then(trades => {
-        const grid = document.createElement('div');
-        grid.className = 'trade-grid';
-        trades.forEach(trade => {
-          const card = document.createElement('div');
-          card.className = 'trade-card';
-          card.innerHTML = `
-            <h3>${trade.symbol} - ${trade.strategy}</h3>
-            <div class="details">
-              <p><strong>Strike:</strong> ${trade.strike_info}</p>
-              <p><strong>Entry:</strong> ${trade.entry}</p>
-              <p><strong>Stop:</strong> ${trade.stop}</p>
-              <p><strong>Target:</strong> ${trade.target}</p>
-              <p><strong>Expiry:</strong> ${trade.expiry}</p>
-              <p><strong>Confidence:</strong> ${'\u2B50'.repeat(trade.confidence_level)}</p>
-            </div>
-            <button data-id="${trade.id}">✅ I'm taking this</button>
-          `;
-          const btn = card.querySelector('button');
-          btn.addEventListener('click', () => {
-            confirmTrade(trade.id);
-          });
-          grid.appendChild(card);
-        });
-        main.innerHTML = '';
-        main.appendChild(grid);
-      })
-      .catch(err => {
-        console.error(err);
-        main.textContent = 'Failed to load trades.';
-      });
-  }
-
-  function confirmTrade(tradeId) {
-    fetch('/api/user-trades', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tradeId })
-    })
-      .then(res => res.json())
-      .then(() => {
-        alert('Trade confirmed!');
-      })
-      .catch(err => console.error(err));
-  }
-
-  function loadDashboard() {
-    if (!main) return;
-    main.innerHTML = '<p>Loading dashboard...</p>';
-    fetch('/api/user-trades')
-      .then(res => res.json())
-      .then(trades => {
-        const table = document.createElement('table');
-        table.className = 'table';
-        table.innerHTML = `
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Entry Time</th>
-              <th>Strike</th>
-              <th>Strategy</th>
-              <th>Target</th>
-              <th>Stop</th>
-              <th>Status</th>
-              <th>Outcome</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        `;
-        const tbody = table.querySelector('tbody');
-        trades.forEach(trade => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${trade.symbol}</td>
-            <td>${new Date(trade.confirmed_at).toLocaleString()}</td>
-            <td>${trade.strike_info}</td>
-            <td>${trade.strategy}</td>
-            <td>${trade.target}</td>
-            <td>${trade.stop}</td>
-            <td class="${trade.status === 'closed' ? 'status-closed' : 'status-open'}">${trade.status}</td>
-            <td>${trade.outcome || ''}</td>
-            <td></td>
-          `;
-          // add close button for open trades
-          if (trade.status === 'open') {
-            const actionTd = tr.lastElementChild;
-            const btn = document.createElement('button');
-            btn.textContent = 'Close';
-            btn.addEventListener('click', () => {
-              const outcome = prompt('Enter outcome (win/loss/neutral):');
-              if (!outcome) return;
-              closeTrade(trade.id, outcome);
-            });
-            actionTd.appendChild(btn);
-          }
-          tbody.appendChild(tr);
-        });
-        main.innerHTML = '';
-        main.appendChild(table);
-      })
-      .catch(err => {
-        console.error(err);
-        main.textContent = 'Failed to load dashboard.';
-      });
-  }
-
-  function closeTrade(id, outcome) {
-    fetch('/api/user-trades/' + id + '/close', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ outcome })
-    })
-      .then(res => res.json())
-      .then(() => {
-        loadDashboard();
-      })
-      .catch(err => console.error(err));
-  }
-
-  function loadSummary() {
-    if (!main) return;
-    main.innerHTML = '<p>Loading summary...</p>';
-    fetch('/api/summary')
-      .then(res => res.json())
-      .then(summary => {
-        const div = document.createElement('div');
-        div.innerHTML = `
-          <h2>Weekly Summary</h2>
-          <p><strong>Total trades taken:</strong> ${summary.totalTaken}</p>
-          <p><strong>Wins:</strong> ${summary.wins}</p>
-          <p><strong>Losses:</strong> ${summary.losses}</p>
-          <p><strong>Neutral:</strong> ${summary.neutral}</p>
-          <p><strong>Win Rate:</strong> ${summary.winRate}%</p>
-          <p><strong>Trades skipped that hit target:</strong> ${summary.skippedHitTarget}</p>
-        `;
-        main.innerHTML = '';
-        main.appendChild(div);
-      })
-      .catch(err => {
-        console.error(err);
-        main.textContent = 'Failed to load summary.';
-      });
-  }
-
-  // Initialize default view
-  setActive(navFeed);
-  loadFeed();
 })();
+
+// Elements
+const feedBtn = document.getElementById('feedBtn');
+const dashboardBtn = document.getElementById('dashboardBtn');
+const summaryBtn = document.getElementById('summaryBtn');
+const viewContainer = document.getElementById('view-container');
+
+// Set active navigation state
+function setActive(button) {
+  [feedBtn, dashboardBtn, summaryBtn].forEach(btn => btn.classList.remove('active'));
+  button.classList.add('active');
+}
+
+// Render feed page
+async function renderFeed() {
+  setActive(feedBtn);
+  viewContainer.innerHTML = '<p>Loading trade ideas…</p>';
+  try {
+    const res = await fetch('/api/trades');
+    const trades = await res.json();
+    let html = '<div class="trade-grid">';
+    trades.forEach(trade => {
+      html += `
+        <div class="trade-card">
+          <div>
+            <h3>${trade.symbol} – ${trade.strategy}</h3>
+            <p class="details">
+              <strong>Strike:</strong> ${trade.strike_info}<br>
+              <strong>Premium:</strong> $${trade.premium}<br>
+              <strong>Expiry:</strong> ${trade.expiry}<br>
+              <strong>Current Price:</strong> $${trade.currentPrice || trade.entry}<br>
+              <strong>Entry:</strong> $${trade.entry}<br>
+              <strong>Stop Loss:</strong> $${trade.stop}<br>
+              <strong>Target:</strong> $${trade.target}<br>
+              <strong>Confidence:</strong> ${'⭐'.repeat(trade.confidence_level)}
+            </p>
+          </div>
+          <button data-id="${trade.id}">✅ I’m Taking This</button>
+        </div>`;
+    });
+    html += '</div>';
+    viewContainer.innerHTML = html;
+    // Bind confirm buttons
+    const buttons = viewContainer.querySelectorAll('button[data-id]');
+    buttons.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        btn.disabled = true;
+        btn.textContent = 'Confirming…';
+        try {
+          const res = await fetch(`/api/trades/${id}/confirm`, {
+            method: 'POST'
+          });
+          const result = await res.json();
+          if (res.ok) {
+            btn.textContent = 'Confirmed ✅';
+            btn.disabled = true;
+          } else {
+            alert(result.error || 'Error confirming trade');
+            btn.textContent = '✅ I’m Taking This';
+            btn.disabled = false;
+          }
+        } catch (err) {
+          alert('Network error');
+          btn.textContent = '✅ I’m Taking This';
+          btn.disabled = false;
+        }
+      });
+    });
+  } catch (error) {
+    viewContainer.innerHTML = '<p>Error loading trades.</p>';
+  }
+}
+
+// Render dashboard
+async function renderDashboard() {
+  setActive(dashboardBtn);
+  viewContainer.innerHTML = '<p>Loading your trades…</p>';
+  try {
+    const res = await fetch('/api/user-trades');
+    const trades = await res.json();
+    if (!trades.length) {
+      viewContainer.innerHTML = '<p>No trades confirmed yet.</p>';
+      return;
+    }
+    let html = '<div class="table-container"><table id="dashboard-table">';
+    html += '<tr><th>Symbol</th><th>Strategy</th><th>Strike</th><th>Entry Time</th><th>Status</th><th>Outcome</th><th>Target</th><th>Stop</th><th>Notes</th><th>Actions</th></tr>';
+    trades.forEach(trade => {
+      const date = new Date(trade.confirmed_at).toLocaleString();
+      html += `<tr data-id="${trade.id}">
+        <td>${trade.symbol}</td>
+        <td>${trade.strategy}</td>
+        <td>${trade.strike_info}</td>
+        <td>${date}</td>
+        <td>${trade.status}</td>
+        <td>${trade.outcome}</td>
+        <td>$${trade.target}</td>
+        <td>$${trade.stop}</td>
+        <td>${trade.notes || ''}</td>
+        <td>`;
+      if (trade.status === 'open') {
+        html += `<button class="close-btn" data-id="${trade.id}">Close</button>`;
+      }
+      html += '</td></tr>';
+    });
+    html += '</table></div>';
+    viewContainer.innerHTML = html;
+    // Bind close buttons
+    const closeButtons = viewContainer.querySelectorAll('.close-btn');
+    closeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        // Ask user for outcome and notes
+        const outcome = prompt('Enter outcome (win, loss, neutral):', 'win');
+        if (!outcome) return;
+        const notes = prompt('Add notes (optional):', '');
+        btn.disabled = true;
+        btn.textContent = 'Closing…';
+        fetch(`/api/user-trades/${id}/close`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ outcome: outcome.toLowerCase(), notes })
+        }).then(async response => {
+          const data = await response.json();
+          if (response.ok) {
+            btn.textContent = 'Closed';
+            btn.disabled = true;
+            // Update row in table
+            const row = btn.closest('tr');
+            row.children[4].textContent = data.status;
+            row.children[5].textContent = data.outcome;
+            row.children[8].textContent = data.notes;
+            row.children[9].innerHTML = '';
+          } else {
+            alert(data.error || 'Error closing trade');
+            btn.textContent = 'Close';
+            btn.disabled = false;
+          }
+        }).catch(() => {
+          alert('Network error');
+          btn.textContent = 'Close';
+          btn.disabled = false;
+        });
+      });
+    });
+  } catch (err) {
+    viewContainer.innerHTML = '<p>Error loading dashboard.</p>';
+  }
+}
+
+// Render summary
+async function renderSummary() {
+  setActive(summaryBtn);
+  viewContainer.innerHTML = '<p>Loading summary…</p>';
+  try {
+    const res = await fetch('/api/summary');
+    const summary = await res.json();
+    const html = `
+      <h2>Weekly Summary</h2>
+      <ul>
+        <li><strong>Total Trades Taken:</strong> ${summary.totalTaken}</li>
+        <li><strong>Wins:</strong> ${summary.wins}</li>
+        <li><strong>Losses:</strong> ${summary.losses}</li>
+        <li><strong>Neutral:</strong> ${summary.neutral}</li>
+        <li><strong>Win Rate:</strong> ${summary.winRate}%</li>
+        <li><strong>Trades Skipped That Hit Target:</strong> ${summary.skippedHitTarget}</li>
+      </ul>
+      <p>
+        ${summary.totalTaken === 0 ? 'You haven’t taken any trades this week. Consider reviewing the trade feed daily to find opportunities.' : ''}
+        ${summary.winRate < 50 && summary.totalTaken > 0 ? 'Review your trading strategies; your win rate is below 50%.' : ''}
+        ${summary.skippedHitTarget > 0 ? 'You skipped some trades that might have hit target. Consider adjusting your selection criteria.' : ''}
+      </p>`;
+    viewContainer.innerHTML = html;
+  } catch (err) {
+    viewContainer.innerHTML = '<p>Error loading summary.</p>';
+  }
+}
+
+// Event listeners
+feedBtn.addEventListener('click', renderFeed);
+dashboardBtn.addEventListener('click', renderDashboard);
+summaryBtn.addEventListener('click', renderSummary);
+
+// Initial view
+renderFeed();
